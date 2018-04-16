@@ -7,7 +7,11 @@ $ PYTHONPATH=. ./bin/ryu run --observe-links \
 
 
 In another terminal run mininet:
-$ sudo python net1.1.py
+$ sudo python 4.py
 
+
+To calculate the current path from h1 to h4, you may need to use this rest command:
+$ curl -X POST -d '{"nw_src":"10.0.1.1","nw_dst":"10.0.1.4"}' \
+    https://localhost:8080/routing/path
 
 Access http://127.0.0.1:8080 with your web browser.
