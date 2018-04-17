@@ -17,6 +17,7 @@
 # conding=utf-8
 import logging
 import json
+import time
 import struct
 import networkx as nx
 from operator import attrgetter
@@ -45,13 +46,15 @@ CONF = cfg.CONF
 
 PATH_NO = CONF.k_paths
 COOKIE_SHIFT = 100  # the 1-st path's 101 and 2-rd is 102 and so on
-IDLE_TIMEOUT = 15
-HARD_TIMEOUT = 15
+IDLE_TIMEOUT = 5
+HARD_TIMEOUT = 5
 
 REST_SRCIP = 'nw_src'
 REST_DSTIP = 'nw_dst'
 
 PRIORITY_FORWARD = 3
+
+PERIOD = 0.1
 
 
 class ShortestForwarding(app_manager.RyuApp):
@@ -102,6 +105,10 @@ class ShortestForwarding(app_manager.RyuApp):
 
         # Start a green thread to delete flow entries.
         # self.del_thread = hub.spawn(self._del)
+
+        # time used to sleep when the controller receives
+        # too many packet_in messages.
+        self.time = time.clock()
 
     def _del(self):
         i = 0
@@ -546,6 +553,14 @@ class ShortestForwarding(app_manager.RyuApp):
         if result:
             src_sw, dst_sw = result[0], result[1]
             if dst_sw:
+
+                if time.clock() - self.time < PERIOD:
+                    self.logger.info("Too many messages to handle!")
+                    return
+                else:
+                    self.logger.info("I'm OK.")
+                    self.time = time.clock()
+
                 # Path has already calculated, just get it.
                 path = self.get_path(src_sw, dst_sw, weight=self.weight)
                 self.logger.info("[PATH]%s<-->%s: %s" % (ip_src, ip_dst, path))
@@ -553,7 +568,6 @@ class ShortestForwarding(app_manager.RyuApp):
 
                 """Modified here."""
                 cookie = self._get_cookie()
-                # cookie = 1
                 self.paths.append(PathInfo(path, flow_info, cookie))
 
                 # install flow entries to datapath along side the path.
@@ -617,8 +631,6 @@ class ShortestForwarding(app_manager.RyuApp):
         pkt = packet.Packet(msg.data)
         arp_pkt = pkt.get_protocol(arp.arp)
         ip_pkt = pkt.get_protocol(ipv4.ipv4)
-
-        # print("ShortestForwarding's packet_in handler is called.")
 
         if isinstance(arp_pkt, arp.arp):
             self.logger.debug("ARP processing")
