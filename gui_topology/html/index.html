@@ -5,8 +5,24 @@
 <link rel="stylesheet" type="text/css" href="./ryu.topology.css">
 <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 </head>
-<body>
+<body style="height:1000px">
 <h1>Ryu Topology Viewer</h1>
 <script src="./ryu.topology.js" charset="utf-8"></script>
+<div style="margin-left:20px;padding:10px;border:1px solid;display:inline-block;height:180px;width:520px">
+
+        <div class="command" style="width:500px;font-size:20px;">Command Submit</div>
+        <div class="command" style="width:100px">source_ip: </div>
+        <div class="command" style="width:90px"><input id="src_ip1" maxlength="3" type="text" ></div>
+        <div class="command" style="width:90px"><input id="src_ip2" maxlength="3" type="text" ></div>
+        <div class="command" style="width:90px"><input id="src_ip3" maxlength="3" type="text" ></div>
+        <div class="command" style="width:90px"><input id="src_ip4" maxlength="3" type="text" ></div>
+        <div class="command" style="width:100px">destination_ip: </div>
+        <div class="command" style="width:90px"><input id="dst_ip1" maxlength="3" type="text" ></div>
+        <div class="command" style="width:90px"><input id="dst_ip2" maxlength="3" type="text" ></div>
+        <div class="command" style="width:90px"><input id="dst_ip3" maxlength="3" type="text" ></div>
+        <div class="command" style="width:90px"><input id="dst_ip4" maxlength="3" type="text" ></div>
+        <div class="command" style="width:500px"><button style="width:100px" id="com_btn"  style="text-align:center" >OK</button></div>
+
+</div>
 </body>
 </html>
