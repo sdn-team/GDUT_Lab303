@@ -1,7 +1,26 @@
 #topology {  
-    border: 1px solid #000000;  
+    border: 1px solid #000000;
+    float:left;
+    display:inline;
 }
+#console {
+    display:block;
+    position:absolute;
+    top:700px;
+}
+.command{
+    margin:5px;
+    float:left;
+    display:inline-block;
+    vertical-align:middle;
+    text-align:center;
+    height:30px;
+}
+input{
+    width:80px;
+    text-align:center;
 
+}
 .node {
 }
 
