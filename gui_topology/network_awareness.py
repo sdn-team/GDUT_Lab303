@@ -43,7 +43,7 @@ PRIORITY_DEFAULT = 0
 PRIORITY_ARP = 1
 PRIORITY_IP = 1
 
-CONF = cfg.CONF
+PATH_NO = setting.PATH_NO
 
 
 class NetworkAwareness(app_manager.RyuApp):
@@ -264,7 +264,7 @@ class NetworkAwareness(app_manager.RyuApp):
         self.create_access_ports()
         self.get_graph(self.link_to_port.keys())
         self.shortest_paths = self.all_k_shortest_paths(
-            self.graph, weight='weight', k=CONF.k_paths)
+            self.graph, weight='weight', k=PATH_NO)
 
     def register_access_info(self, dpid, in_port, ip, mac):
         """
