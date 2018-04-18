@@ -63,7 +63,7 @@ class GUIServerController(ControllerBase):
         return self.static_app(req)
 
 
-# app_manager.require_app(PATH + '/shortest_forwarding.py')
+app_manager.require_app(PATH + '/shortest_forwarding.py')
 
 app_manager.require_app('ryu.app.rest_topology')
 app_manager.require_app('ryu.app.ws_topology')
