@@ -41,12 +41,10 @@ import network_awareness
 import network_monitor
 import network_delay_detector
 
-CONF = cfg.CONF
-
-PATH_NO = CONF.k_paths
+PATH_NO = 3
 COOKIE_SHIFT = 100  # the 1-st path's 101 and 2-rd is 102 and so on
-IDLE_TIMEOUT = 15
-HARD_TIMEOUT = 15
+IDLE_TIMEOUT = 5
+HARD_TIMEOUT = 5
 
 REST_SRCIP = 'nw_src'
 REST_DSTIP = 'nw_dst'
@@ -65,20 +63,13 @@ class ShortestForwarding(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
     _CONTEXTS = {
         "network_awareness": network_awareness.NetworkAwareness,
-        "network_monitor": network_monitor.NetworkMonitor,
-        "network_delay_detector": network_delay_detector.NetworkDelayDetector,
         'wsgi': WSGIApplication}
-
-    WEIGHT_MODEL = {'hop': 'weight', 'delay': "delay", "bw": "bw"}
 
     def __init__(self, *args, **kwargs):
         super(ShortestForwarding, self).__init__(*args, **kwargs)
         self.name = 'shortest_forwarding'
         self.awareness = kwargs["network_awareness"]
-        self.monitor = kwargs["network_monitor"]
-        self.delay_detector = kwargs["network_delay_detector"]
         self.datapaths = {}
-        self.weight = self.WEIGHT_MODEL[CONF.weight]
 
         """modified here."""
         self.path_no = PATH_NO
@@ -96,28 +87,8 @@ class ShortestForwarding(app_manager.RyuApp):
 
         path = '/routing/path'
         mapper.connect('routing_path', path, controller=PathCalcu,
-                       # requirements=requirements,
                        action='get_path',
                        conditions=dict(method=['POST']))
-
-        # Start a green thread to delete flow entries.
-        # self.del_thread = hub.spawn(self._del)
-
-    def _del(self):
-        i = 0
-        while True:
-            # self.logger.info("_del is called.")
-            if i == 5:
-                """Modified here."""
-                if len(self.paths):
-                    path_info = self.paths[0]
-                    self.logger.info("path_info is [%s]" % path_info)
-                    self.del_shortest_forwarding(path_info)
-                    self.logger.info("Delete flow entries.")
-                    del self.paths[0]
-                i = 0
-            hub.sleep(2)
-            i = i + 1
 
     def set_weight_mode(self, weight):
         """
