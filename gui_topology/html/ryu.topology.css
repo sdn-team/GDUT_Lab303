@@ -24,11 +24,13 @@ input{
 .node {
 }
 
-.node.fixed .hostnode.fixed
+.node.fixed
 {
     fill: #C0C0C0;
 }
-
+.hostnode.fixed{
+    fill: #C0C0C0;
+}
 .node text {
     font-size: 14px;
 }

@@ -205,7 +205,7 @@ var topo = {
     node_index: {}, // dpid -> index of nodes array
     hostNode_index: {},
     initialize: function (data) {
-        this.add_nodes(data.switches,data.hostss);
+        this.add_nodes(data.switches,data.hosts);
         this.add_links(data.links);
         this.add_hostLinks();
 
@@ -483,7 +483,7 @@ function initialize_topology() {
     d3.json("/v1.0/topology/switches", function(error, switches) {
         d3.json("/v1.0/topology/links", function(error, links) {
             d3.json("v1.0/topology/hosts", function(error, hosts) {
-                topo.initialize({switches: switches, links: links, hostss: hosts});  //self-added hosts:host   test-result:response normally
+                topo.initialize({switches: switches, links: links, hosts: hosts});  //self-added hosts:host   test-result:response normally
                 elem.update();
             });
         });
