@@ -24,15 +24,25 @@ input{
 .node {
 }
 
-.node.fixed {
+.node.fixed .hostnode.fixed
+{
     fill: #C0C0C0;
 }
 
 .node text {
     font-size: 14px;
 }
-
 .link {
+    stroke: #090909;
+    stroke-opacity: .6;
+    stroke-width: 2px;
+}
+.busylink {
+    stroke: #FF0000;
+    stroke-opacity: .6;
+    stroke-width: 2px;
+}
+.relaxlink {
     stroke: #090909;
     stroke-opacity: .6;
     stroke-width: 2px;
