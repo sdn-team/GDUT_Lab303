@@ -47,6 +47,16 @@ function _tick() {
         .attr("x2", function(d) { return d.target.x; })
         .attr("y2", function(d) { return d.target.y; });
 
+    elem.relaxlink.attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+
+    elem.busylink.attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+
     elem.node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 
     elem.hostNode.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
@@ -91,6 +101,8 @@ function _dragstart(d) {
 }
 elem.node = elem.svg.selectAll(".node");
 elem.link = elem.svg.selectAll(".link");
+elem.busylink = elem.svg.selectAll(".busylink");
+elem.relaxlink = elem.svg.selectAll(".relaxlink");
 elem.port = elem.svg.selectAll(".port");
 elem.hostNode = elem.svg.selectAll(".hostNode")
 elem.update = function () {
@@ -98,16 +110,22 @@ elem.update = function () {
         .nodes(topo.nodes)
         .links(topo.links)
         .start();
-    for (var i = 0; i< topo.links ;i++){
-        if(topo.links[i].isBusySwitch)
-        {
 
-        }
-    }
     this.link = this.link.data(topo.links);
     this.link.exit().remove();
     this.link.enter().append("line")
         .attr("class", "link");
+
+    this.busylink = this.busylink.data(topo.busyLinks);
+    this.busylink.exit().remove();
+    this.busylink.enter().append("line")
+        .attr("class", "busylink");
+
+//    this.relaxlink = this.relaxlink.data(topo.relaxLinks);
+//    this.relaxlink.exit().remove();
+//    this.relaxlink.enter().append("line")
+//        .attr("class", "relaxlink");
+
 
     this.node = this.node.data(topo.switchNodes);
     this.node.exit().remove();
@@ -159,17 +177,35 @@ elem.update = function () {
 function is_valid_link(link) {
     return (link.src.dpid < link.dst.dpid)
 }
-
+function dpid_patch(num){
+    //  from single num to 16 bit num ,like 1 to 0000000000000001
+    var data = num + "";
+    var str_length = data.length;
+    for (var i = 0 ; i< 16-str_length;i++){
+        data = "0"+data;
+    }
+    return data
+}
+function sleep(numberMillis) {
+    var now = new Date();
+    var exitTime = now.getTime() + numberMillis;
+    while (true) {
+        now = new Date();
+        if (now.getTime() > exitTime)
+        return;
+        }
+}
 var topo = {
     switchNodes : [],
     hostNodes : [],
     nodes: [],
     busyLinks: [],
+    relaxLinks : [],
     links: [],
     node_index: {}, // dpid -> index of nodes array
     hostNode_index: {},
     initialize: function (data) {
-        this.add_nodes(data.switches,data.hostss);
+        this.add_nodes(data.switches,data.hosts);
         this.add_links(data.links);
         this.add_hostLinks();
 
@@ -184,11 +220,13 @@ var topo = {
             var dst_ip3 = document.getElementById("dst_ip3").value;
             var dst_ip4 = document.getElementById("dst_ip4").value;
             if((src_ip1<=255 && src_ip1>=0) && (src_ip2<=255 && src_ip2>=0) && (src_ip3<=255 && src_ip3>=0) && (src_ip4<=255 && src_ip4>=0)
-             && (dst_ip1<=255 && dst_ip1>=0) && (dst_ip2<=255 && dst_ip2>=0) && (dst_ip3<=255 && dst_ip1>=3) && (dst_ip4<=255 && dst_ip4>=0)){
-                    var json_url = "";
+             && (dst_ip1<=255 && dst_ip1>=0) && (dst_ip2<=255 && dst_ip2>=0) && (dst_ip3<=255 && dst_ip1>=0) && (dst_ip4<=255 && dst_ip4>=0)){
+                    var src_ip = src_ip1 +"."+ src_ip2 +"."+ src_ip3 +"."+ src_ip4;
+                    var dst_ip = dst_ip1 +"."+ dst_ip2 +"."+ dst_ip3 +"."+ dst_ip4;
+                    var json_url = "/routing/path";
                     d3.json(json_url,function (error,data){
-
-                    });
+                            topo.add_busyLinks(data,src_ip,dst_ip);
+                    }).header("Content-Type","application/json").send("POST", JSON.stringify({nw_src: src_ip, nw_dst: dst_ip}));
              }else{
                 alert("the input address is invalid");
              }
@@ -206,22 +244,21 @@ var topo = {
             nodes[i].node_id = node_id;
             node_id++;
             this.nodes.push(nodes[i]);
-            console.log("add switch: " + JSON.stringify(nodes[i]));
+            //console.log("add switch: " + JSON.stringify(nodes[i]));
         }
         for (var i = 0; i < hosts.length; i++) {
             hosts[i].isHost=true;
             hosts[i].node_id = node_id;
             node_id++;
             this.nodes.push(hosts[i]);
-            console.log("add host: " + JSON.stringify(hosts[i]));
+           // console.log("add host: " + JSON.stringify(hosts[i]));
         }
-        alert(hosts.length);
         this.refresh_node_index();
     },
     add_links: function (links) {
         for (var i = 0; i < links.length; i++) {
             if (!is_valid_link(links[i])) continue;
-            console.log("add link: " + JSON.stringify(links[i]));
+            //console.log("add link: " + JSON.stringify(links[i]));
 
             var src_dpid = links[i].src.dpid;
             var dst_dpid = links[i].dst.dpid;
@@ -237,6 +274,59 @@ var topo = {
             }
             this.links.push(link);
         }
+    },
+    add_busyLinks :function (data,src_ip ,dst_ip){
+        var src_host_mac , dst_host_mac;
+        for (var i = 1; i < this.hostNodes.length; i++ ){
+            if (this.hostNodes[i].ipv4[0] == src_ip){
+                src_host_mac = this.hostNodes[i].mac;
+            }
+            if (this.hostNodes[i].ipv4[0] == dst_ip){
+                dst_host_mac = this.hostNodes[i].mac;
+            }
+        }
+        // clear the isBusy flag
+        for (var i =0; i < this.links.length; i++){
+            this.links[i].isBusy = false;
+        }
+        this.busyLinks.splice(0,this.busyLinks.length);
+        this.relaxLinks.splice(0,this.relaxLinks.length);
+
+        // get the busy link between switches
+        var busy_link_src, busy_link_dst;
+        for(var i =1 ;i <data.length ;i++){
+            busy_link_src = dpid_patch(data[i-1]);
+            busy_link_dst = dpid_patch(data[i]);
+            console.log(busy_link_src,busy_link_dst);
+            for (var j =0; j < this.links.length; j++){
+                if (this.links[j].target.isHost == false){
+                    if(busy_link_src == this.links[j].source.dpid && busy_link_dst == this.links[j].target.dpid){
+                                this.links[j].isBusy = true;
+                    }
+                }
+            }
+        }
+        // get the buys link between host and switch
+        for (var j =0; j < this.links.length; j++){
+                if (this.links[j].target.isHost == true){
+                    if(src_host_mac == this.links[j].target.mac || dst_host_mac == this.links[j].target.mac){
+                            this.links[j].isBusy = true;
+                    }else{
+                            this.links[j].isBusy = false;
+                    }
+                }
+        }
+        for (var i = 0 ;i<this.links.length;i++){
+            if (this.links[i].isBusy == true){
+                this.busyLinks.push(this.links[i]);
+            }
+            else{
+                this.relaxLinks.push(this.links[i]);
+            }
+        }
+        elem.update();
+//        console.log(this.links);
+//        console.log(this.busyLinks,this.relaxLinks);
     },
     add_hostLinks : function (){
         for (var i = 0; i < this.nodes.length; i++){
@@ -271,25 +361,6 @@ var topo = {
             }
             this.links.push(link);
         }
-
-    },
-    add_busyLinks: function(){
-        var src_switch = 0;
-        var dst_switch = 0;
-        for (var i = 1;i < path.length; i++){
-        src_switch = path[i-1];
-        dst_switch = path[i]
-        for (var j = 0;j < link.length; j++){
-            if(link[i].src.dpid==src_switch && link[i].dst.dpid==dst_switch){
-                link[i].isBusySwitch = true;
-                this.busyLinks.push(link[i]);
-            }else{
-                link[i].isBustSwitch =false;
-            }
-        }
-
-    }
-
     },
     delete_nodes: function (nodes) {
         for (var i = 0; i < nodes.length; i++) {
@@ -412,7 +483,7 @@ function initialize_topology() {
     d3.json("/v1.0/topology/switches", function(error, switches) {
         d3.json("/v1.0/topology/links", function(error, links) {
             d3.json("v1.0/topology/hosts", function(error, hosts) {
-                topo.initialize({switches: switches, links: links, hostss: hosts});  //self-added hosts:host   test-result:response normally
+                topo.initialize({switches: switches, links: links, hosts: hosts});  //self-added hosts:host   test-result:response normally
                 elem.update();
             });
         });
