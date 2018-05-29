@@ -22,20 +22,31 @@ def multiControllerNet(con_num=2, sw_num=7, host_num=3):
     "Create a network from semi-scratch with multiple controllers."
 
     controller_list = []
-    switch_list = []
-    host_list = []
 
     net = Mininet(controller=None, switch=OVSSwitch, link=TCLink)
 
-    for i in xrange(con_num):
-        name = 'controller%s' % str(i)
-        c = net.addController(name, controller=RemoteController,
-                                  port=6661 + i)
-        controller_list.append(c)
-        print "*** Creating %s" % name
+    # for i in xrange(con_num):
+    #     name = 'controller%s' % str(i)
+    #     c = net.addController(name, controller=RemoteController,
+    #                               port=6661 + i)
+    #     controller_list.append(c)
+    #     print "*** Creating %s" % name
+
+    print "*** Creating c0"
+    c0 = net.addController('c0', controller=RemoteController,
+                           port=6661)
+    controller_list.append(c0)
+
+    # Contact to a remote controller running at 192.168.75.147
+    # which is the ip address of the virtual machine
+    print "*** Creating c1"
+    c1 = net.addController('c1', controller=RemoteController,
+                           ip='192.168.75.147', port=6662)
+    controller_list.append(c1)
 
     print "*** Creating switches"
-    switch_list = [net.addSwitch('s%d' % n,protocols='OpenFlow13') for n in xrange(sw_num)]
+    switch_list = [net.addSwitch('s%d' % (n+1), protocols='OpenFlow13')
+                   for n in xrange(sw_num)]
     
     print "*** Creating hosts"
     host_list = [net.addHost('h%d' % n) for n in xrange(host_num)]
@@ -47,11 +58,9 @@ def multiControllerNet(con_num=2, sw_num=7, host_num=3):
     net.addLink(switch_list[6], host_list[1])
 
     print "*** Creating intra links of switch2switch."
-    for i in xrange(0, sw_num-1):
+    for i in xrange(0, sw_num-2):
         net.addLink(switch_list[i], switch_list[i+1])
-
-
-
+    net.addLink(switch_list[4], switch_list[6])
 
     print "*** Starting network"
     net.build()
@@ -65,9 +74,6 @@ def multiControllerNet(con_num=2, sw_num=7, host_num=3):
     _No = 1
     for j in xrange(3, 7):
          switch_list[j].start([controller_list[_No]])
-
-        #print "*** Testing network"
-        #net.pingAll()
 
     print "*** Running CLI"
     CLI(net)
