@@ -5,8 +5,9 @@
 
 为了使用本文档，请您将此目录放置在~/ryu/app/目录下，并以sdn_com命名。
 
-为了使用浏览器查看网络的拓扑结构视图，您需要对ryu/base/app_manager.py做如下修改：
-```bash
+为了使用浏览器查看网络的拓扑结构视图，您需要对ryu/base/app_manager.py做如下修改（
+这是因为gui_topology.py会影响其他的rest命令，所以应该最后才对它进行实例化。）：
+```
 diff --git a/ryu/base/app_manager.py b/ryu/base/app_manager.py
 index f684259..84d37d2 100644
 --- a/ryu/base/app_manager.py
@@ -31,4 +32,3 @@ index f684259..84d37d2 100644
          self._update_bricks()
          self.report_bricks()
 ```
-这是因为gui_topology.py会影响其他的rest命令，所以应该最后才对它进行实例化。

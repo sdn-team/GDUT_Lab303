@@ -208,34 +208,6 @@ var topo = {
         this.add_nodes(data.switches,data.hosts);
         this.add_links(data.links);
         this.add_hostLinks();
-
-
-        document.getElementById("com_btn").onclick=function(){
-            var src_ip1 = document.getElementById("src_ip1").value;
-            var src_ip2 = document.getElementById("src_ip2").value;
-            var src_ip3 = document.getElementById("src_ip3").value;
-            var src_ip4 = document.getElementById("src_ip4").value;
-            var dst_ip1 = document.getElementById("dst_ip1").value;
-            var dst_ip2 = document.getElementById("dst_ip2").value;
-            var dst_ip3 = document.getElementById("dst_ip3").value;
-            var dst_ip4 = document.getElementById("dst_ip4").value;
-            if((src_ip1<=255 && src_ip1>=0) && (src_ip2<=255 && src_ip2>=0) && (src_ip3<=255 && src_ip3>=0) && (src_ip4<=255 && src_ip4>=0)
-             && (dst_ip1<=255 && dst_ip1>=0) && (dst_ip2<=255 && dst_ip2>=0) && (dst_ip3<=255 && dst_ip1>=0) && (dst_ip4<=255 && dst_ip4>=0)){
-                    var src_ip = src_ip1 +"."+ src_ip2 +"."+ src_ip3 +"."+ src_ip4;
-                    var dst_ip = dst_ip1 +"."+ dst_ip2 +"."+ dst_ip3 +"."+ dst_ip4;
-                    var json_url = "/routing/path";
-                    d3.json(json_url,function (error,data){
-                            topo.add_busyLinks(data,src_ip,dst_ip);
-                    }).header("Content-Type","application/json").send("POST", JSON.stringify({nw_src: src_ip, nw_dst: dst_ip}));
-             }else{
-                alert("the input address is invalid");
-             }
-
-        };
-//    some testing commands
-//        alert(data.switches);
-//        alert(data.links);
-//        alert(data.hosts);
     },
     add_nodes: function (nodes,hosts) {
         var node_id = 0;
